@@ -5,9 +5,21 @@ defmodule Dotp.MixProject do
     [
       app: :dotp,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      releases: [
+        driver: [
+          version: "0.0.1",
+          applications: [dotp: :permanent],
+          cookie: "secret"
+        ],
+        app: [
+          version: "0.0.1",
+          applications: [dotp: :permanent],
+          coolie: "secret"
+        ]
+      ]
     ]
   end
 

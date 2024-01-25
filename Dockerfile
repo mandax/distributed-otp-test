@@ -1,36 +1,24 @@
-FROM bitwalker/alpine-elixir:1.15 as builder
-
-ADD . /app
+FROM elixir:1.14-otp-25-alpine as builder
 
 WORKDIR /app
+
+COPY mix.exs mix.lock ./
+COPY config/config.exs config/
+COPY lib lib
+COPY rel rel
 
 ENV MIX_ENV=prod
 
-RUN mix do deps.get, compile, release
+RUN mix do deps.get, compile
+RUN mix release driver
 
-FROM alpine:3.6
-
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.8/community" >> /etc/apk/repositories
-
-RUN apk update && apk add --no-cache \
-	 ca-certificates \
-     openssl-dev \
-     ncurses-libs \
-     unixodbc-dev \
-     zlib-dev \
-	 gcompat \
-	 libgcc \
-	 libstdc++ \
-	 libc6-compat
-
-RUN ln -s /usr/lib/libncurses.so.5.9 /usr/lib/libtinfo.so.6
+FROM elixir:1.14-otp-25-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/_build/prod/rel/dotp /app
-RUN echo "secret" > /app/releases/COOKIE
+COPY --from=builder /app/_build/prod/rel/driver /app
 
-ENV PORT=8080 \
-	SHELL=/bin/sh 
+# Default port from erlang port mapping daemon (epmd)
+EXPOSE 4369 
 
-CMD ["/app/bin/dotp", "start"]
+CMD ["/app/bin/driver", "start"]
